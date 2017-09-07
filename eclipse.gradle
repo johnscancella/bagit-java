@@ -1,26 +1,11 @@
+import org.gradle.plugins.ide.eclipse.model.AccessRule
 apply plugin: 'eclipse'
-
-eclipse.classpath.file.withXml { xml ->
-  def node = xml.asNode()
-
-  //make resources lib instead of src kind
-  Node resources = node.find {it.@path == "src/main/resources"}
-  if(resources != null){
-    resources.attributes().put("kind", "lib")
-    resources.attributes().put("exported", "true")
-  }
-  resources = node.find {it.@path == "src/test/resources"}
-  if(resources != null){
-    resources.attributes().put("kind", "lib")
-    resources.attributes().put("exported", "false")
-  }
-}
 
 eclipse.project.file.withXml { provider ->
   ignoreDerivedResources(provider.asNode())
 }
 
-def ignoreDerivedResources(projectDescription, directories = ["build", "target", "test-output"]) {
+def ignoreDerivedResources(projectDescription, directories = ["build", ".gradle", ".git", ".settings"]) {
   def count = directories.count { file(it).exists() }
   if (count > 0) {
     def filter = projectDescription
@@ -33,11 +18,21 @@ def ignoreDerivedResources(projectDescription, directories = ["build", "target",
     matcher.appendNode("id", "org.eclipse.ui.ide.orFilterMatcher")
     def arguments = matcher.appendNode("arguments")
     directories.each {
-      if (file(it).exists()) {
         def dirMatcher = arguments.appendNode("matcher")
         dirMatcher.appendNode("id", "org.eclipse.ui.ide.multiFilter")
         dirMatcher.appendNode("arguments", "1.0-projectRelativePath-matches-false-false-${it}")
-      }
     }
   }
+}
+
+eclipse.classpath.file{
+  whenMerged { classpath ->
+      classpath.getEntries().each{ entry ->
+        if(entry.getKind().equals("con")){ //there should only ever be one container, the JDK
+          //println("DEBUG: entry is: " + entry)
+          AccessRule javafxRule = new AccessRule("accessible", "javafx/**")
+          entry.getAccessRules().add(javafxRule)
+        }
+      }
+    }
 }

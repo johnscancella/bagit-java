@@ -1,15 +1,31 @@
-jdk:
-  - openjdk6
-  - openjdk7
-  - oraclejdk7
-  - oraclejdk8
+matrix:
+  include:
+    - os: linux
+      jdk: oraclejdk8
+      dist: trusty
+    - os: osx
+      osx_image: xcode8
+      before_script: 
+        - brew update
+        - brew install gradle
+
+language: java
+
+#we don't care about having that much git history when building
+git:
+  depth: 3
+
+#include the conformance suite repo
+before_install: "git clone --depth 3 https://github.com/loc-rdc/bagit-conformance-suite.git"
+install: true #skip having travis-ci trying te run assemble
+script: "gradle clean check"
+after_success: "gradle coveralls"
 env:
   global:
-  - secure: SCGYrG7fUpGSLSr6resDhW4G3Cmr4rlTexw6m1av+J8NhtII3lb5TkBImLlH1gGyaMwGN7ULV6wzmJ5/EHMnVEW5jEDlv6Gla0niX0hnmH4WmTH387gurvZhr+xnIj06fyDt7W0Wt3i9wUMLWIcCk6c+DOattRtVQa8tJSocn5Q=
-  - secure: Hd0Teo2pVdibnK+ioAw5ACtfLFCmyXnKFa3TXiQWvHrtLRIc+wxlZ59J0WFaB6L8yME8nT8yunXLuc99K+w6E0A29Vja56zuRN1bviLntsJnG0/dNro9ZsaHgZJfRrgzS+ne9QlzAGiwTJduGI9D1ehg1ibcrUqA/9V1n5LYYUI=
-language: java
-before_install: "git clone -b travis `git config --get remote.origin.url` target/travis"
-script: "[ ${TRAVIS_PULL_REQUEST} = 'false' ] && mvn clean deploy --settings target/travis/settings.xml || mvn clean install --settings target/travis/settings.xml"
-branches:
-  only:
-    - master
+    - secure: "hxoE+e6yrSkpP9/+04jgaI4o6kJdMk+vz3eVRnxc7xGzWh4D8N9UsEL/iviDdKgaxrKKik1rkD0U8222NbGFNZSfmeL0j5e+LSTm6Wz5FL0n4t75z5kge4dfH33ndoNJsRfc2CknocXflw0R+Vcn6fb3Dk0osMsdZmhgaObf4zI="
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/

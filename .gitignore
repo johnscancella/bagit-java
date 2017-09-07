@@ -1,7 +1,9 @@
 target/
 bin/
 build/
+bagit-conformance-suite/
 .project
 .settings/
 .classpath
 .gradle/
+.DS_Store
